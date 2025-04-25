@@ -6,6 +6,16 @@ y = rnorm(100, mu, 0.5^2)
 
 data = data.frame("y" = y, "x" = x)
 
+regress = function(designMat, y)
+{
+  betaHat = solve(t(designMat)%*%designMat)%*%t(designMat)%*%y
+  
+  yHatTemp = designMat%*%betaHat
+  
+  splineDatTemp = data.frame("y" = yHatTemp, "x" = x)
+  return(splineDatTemp)
+}
+
 Splines_Custom = function(type, knots, data)
 {
   data = data[order(data$x), ]
@@ -22,11 +32,8 @@ Splines_Custom = function(type, knots, data)
         x = tempPoints$x
         y = tempPoints$y
         designMat = matrix(rep(1, length(x)), ncol = 1)
-        betaHat = solve(t(designMat)%*%designMat)%*%t(designMat)%*%y
         
-        yHatTemp = designMat%*%betaHat
-        
-        splineDatTemp = data.frame("y" = yHatTemp, "x" = x)
+        splineDatTemp = regress(designMat, y)
         splineDat = rbind(splineDat, splineDatTemp)
       }
       
@@ -36,11 +43,8 @@ Splines_Custom = function(type, knots, data)
         x = tempPoints$x
         y = tempPoints$y
         designMat = matrix(rep(1, length(x)), ncol = 1)
-        betaHat = solve(t(designMat)%*%designMat)%*%t(designMat)%*%y
+        splineDatTemp = regress(designMat, y)
         
-        yHatTemp = designMat%*%betaHat
-        
-        splineDatTemp = data.frame("y" = yHatTemp, "x" = x)
         splineDat = rbind(splineDat, splineDatTemp)
         
       }
@@ -50,11 +54,8 @@ Splines_Custom = function(type, knots, data)
         x = tempPoints$x
         y = tempPoints$y
         designMat = matrix(rep(1, length(x)), ncol = 1)
-        betaHat = solve(t(designMat)%*%designMat)%*%t(designMat)%*%y
+        splineDatTemp = regress(designMat, y)
         
-        yHatTemp = designMat%*%betaHat
-        
-        splineDatTemp = data.frame("y" = yHatTemp, "x" = x)
         splineDat = rbind(splineDat, splineDatTemp)
       }
     }
@@ -63,7 +64,43 @@ Splines_Custom = function(type, knots, data)
   
   if (type == "Piecewise Linear")
   {
-    
+    splineDat = data.frame("y" = c(), "x" = c())
+    for (i in 1:(length(knots) + 1))
+    {
+      if (i == 1)
+      {
+        
+        tempPoints = data[data$x < knots[i], ]
+        x = tempPoints$x
+        y = tempPoints$y
+        designMat = matrix(c(rep(1, length(x)), x), ncol = 1)
+        
+        splineDatTemp = regress(designMat, y)
+        splineDat = rbind(splineDat, splineDatTemp)
+      }
+      
+      if(1 < i & i < (length(knots) + 1))
+      {
+        tempPoints = data[knots[i-1] <= data$x & data$x < knots[i], ]
+        x = tempPoints$x
+        y = tempPoints$y
+        designMat = matrix(c(rep(1, length(x)), x), ncol = 1)
+        splineDatTemp = regress(designMat, y)
+        
+        splineDat = rbind(splineDat, splineDatTemp)
+        
+      }
+      if(i == (length(knots) + 1))
+      {
+        tempPoints = data[data$x >= knots[i-1], ]
+        x = tempPoints$x
+        y = tempPoints$y
+        designMat = matrix(c(rep(1, length(x)), x), ncol = 1)
+        splineDatTemp = regress(designMat, y)
+        
+        splineDat = rbind(splineDat, splineDatTemp)
+      }
+    }
   }
   
   if (type == "Broken Stick")
@@ -96,6 +133,9 @@ Splines_Custom = function(type, knots, data)
 
 splines = Splines_Custom("Piecewise Constant", c(0.33, 0.66), data)
 splines
+
+plot(data$y ~ data$x)
+lines(splines$y ~ splines$x)
 
 
 
