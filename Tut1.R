@@ -225,7 +225,8 @@ Splines_Custom = function(type, knots, data)
   
   if (type == "B Spline Basis")
   {
-
+    
+    
   }
   
   return(splineDat)
