@@ -71,7 +71,7 @@ plot_ly() %>%
   ))
 
 
-b1 = gam(AvgRain ~ s(Year, k = 25), data = meanDat, select = TRUE)
+b1 = gam(AvgRain ~ Year + s(Year, k = 25), data = meanDat, select = TRUE)
 b1
 
 plot(meanDat$Year, meanDat$AvgRain, pch = 16, col = rgb(0, 0, 1, 0.4),
@@ -81,4 +81,25 @@ year_seq <- data.frame(Year = seq(min(meanDat$Year), max(meanDat$Year), length.o
 preds <- predict(b1, newdata = year_seq, se.fit = TRUE)
 
 lines(year_seq$Year, preds$fit, col = "red", lwd = 2)
+
+b2 = gam(AvgRain ~ s(SOI, k = 25), data = meanDat, select = TRUE)
+b2
+
+plot(meanDat$SOI, meanDat$AvgRain, pch = 16, col = rgb(0, 0, 1, 0.4),
+     xlab = "Year", ylab = "AvgRain", main = "GAM fit over data")
+
+SOI_seq <- data.frame(SOI = seq(min(meanDat$SOI), max(meanDat$SOI), length.out = 200))
+preds2 <- predict(b2, newdata = SOI_seq, se.fit = TRUE)
+
+lines(SOI_seq$SOI, preds2$fit, col = "red", lwd = 2)
+
+b3 = gam(AvgRain ~ s(SOI) + s(year), data = meanDat)
+
+plot(meanDat$SOI, meanDat$AvgRain, pch = 16, col = rgb(0, 0, 1, 0.4),
+     xlab = "Year", ylab = "AvgRain", main = "GAM fit over data")
+
+SOI_seq <- data.frame(SOI = seq(min(meanDat$SOI), max(meanDat$SOI), length.out = 200))
+preds2 <- predict(b2, newdata = SOI_seq, se.fit = TRUE)
+
+lines(SOI_seq$SOI, preds2$fit, col = "red", lwd = 2)
 
