@@ -93,13 +93,100 @@ preds2 <- predict(b2, newdata = SOI_seq, se.fit = TRUE)
 
 lines(SOI_seq$SOI, preds2$fit, col = "red", lwd = 2)
 
-b3 = gam(AvgRain ~ s(SOI) + s(year), data = meanDat)
+b3 = gam(AvgRain ~ s(SOI) + s(Year), data = meanDat)
 
-plot(meanDat$SOI, meanDat$AvgRain, pch = 16, col = rgb(0, 0, 1, 0.4),
-     xlab = "Year", ylab = "AvgRain", main = "GAM fit over data")
+vis.gam(b3, theta = 30, phi = 30)
 
-SOI_seq <- data.frame(SOI = seq(min(meanDat$SOI), max(meanDat$SOI), length.out = 200))
-preds2 <- predict(b2, newdata = SOI_seq, se.fit = TRUE)
+###
+# Back fitting
 
-lines(SOI_seq$SOI, preds2$fit, col = "red", lwd = 2)
+y = meanDat$AvgRain
+x = meanDat$SOI
+z = meanDat$Year
+n = length(y)
+
+f1 = rep(0, n)
+f2 = rep(0, n)
+
+b0 = mean(y)
+
+oldF1 = f1
+oldF2 = f2
+
+for (i in 1:50)
+{
+  r1 = y - b0 - f2 
+  f1Fit = smooth.spline(x, r1, all.knots = TRUE)
+  f1 = predict(f1Fit, x)$y
+  f1 = f1 - mean(f1)
+  
+  r2 = y - b0 - f1
+  f2Fit = smooth.spline(z, r2, all.knots = TRUE)
+  f2 = predict(f2Fit, z)$y
+  f2 = f2 - mean(f2)
+
+  oldF1 = f1
+  oldF2 = f2
+  
+}
+
+fitted_vals <- b0 + f1 + f2
+
+
+
+plot(x, y, pch = 20, col = "grey", main = "Fitted Curve over Actual Data", 
+     xlab = "SOI", ylab = "AvgRain")
+
+# Add the fitted smooth curve (b0 + f1)
+ord = order(x)
+lines(x[ord], (b0 + f1)[ord], col = "blue", lwd = 2)
+
+plot(z, y, pch = 20, col = "grey", main = "Fitted Curve over Actual Data", 
+     xlab = "Year", ylab = "AvgRain")
+
+# Add the fitted smooth curve (b0 + f2)
+ord = order(z)
+lines(z[ord], (b0 + f2)[ord], col = "blue", lwd = 2)
+
+
+#######
+# Question 3/4 
+
+set.seed(120)
+
+x = seq(0, 2*pi, by = 0.1)
+y = sin(x) + rnorm(length(x), 0, sd = sd(sin(x) / 2))
+plot(y ~ x, las = 1)
+
+B = bs(x, df = 10)
+
+
+# Plot multiple splines
+for (i in 1:20) {
+  lines(x, B %*% rnorm(ncol(B)), col = rgb(0, 0, 1, 0.4))
+}
+
+gamMod = gam(y ~ s(x))
+
+pred = predict(gamMod, type = "lpmatrix")
+betaHat = coef(gamMod)
+vB = vcov(gamMod)
+
+betaSims = MASS::mvrnorm(20, mu = betaHat, Sigma = vB)
+
+plot(y ~ x, las = 1)
+
+for(i in 1:20)
+{
+  lines(x, pred%*%betaSims[i, ], col = "green")
+}
+length(pred)
+
+
+# Question 5
+
+cycleDat = MASS::mcycle
+
+
+
 
